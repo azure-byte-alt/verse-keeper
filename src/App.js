@@ -1,30 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 
-// ─────────────────────────────────────────────────────────────
-// Palette — warm cream + sage. Mirrors the Verse Keeper design.
-// All values are OKLCH for finer control on modern browsers.
-// ─────────────────────────────────────────────────────────────
 const LIGHT = {
   bg:          "oklch(0.965 0.013 80)",
   bg2:         "oklch(0.98 0.01 80)",
   card:        "oklch(0.99 0.008 80)",
   cardTint:    "oklch(0.945 0.018 80)",
-
   ink:         "oklch(0.27 0.02 55)",
   ink2:        "oklch(0.42 0.018 55)",
   ink3:        "oklch(0.58 0.016 60)",
   ink4:        "oklch(0.72 0.012 65)",
-
   accent:      "oklch(0.55 0.06 145)",
   accentSoft:  "oklch(0.93 0.025 145)",
   accentDeep:  "oklch(0.42 0.05 145)",
-
   amber:       "oklch(0.72 0.095 75)",
   amberSoft:   "oklch(0.94 0.035 80)",
-
   hair:        "oklch(0.88 0.014 75)",
   hair2:       "oklch(0.92 0.012 75)",
-
   danger:      "oklch(0.55 0.13 25)",
   dangerSoft:  "oklch(0.94 0.03 30)",
 };
@@ -34,22 +25,17 @@ const DARK = {
   bg2:         "oklch(0.25 0.012 55)",
   card:        "oklch(0.28 0.014 55)",
   cardTint:    "oklch(0.31 0.016 55)",
-
   ink:         "oklch(0.93 0.012 75)",
   ink2:        "oklch(0.78 0.012 65)",
   ink3:        "oklch(0.6 0.014 60)",
   ink4:        "oklch(0.5 0.014 60)",
-
   accent:      "oklch(0.72 0.07 145)",
   accentSoft:  "oklch(0.32 0.04 145)",
   accentDeep:  "oklch(0.82 0.07 145)",
-
   amber:       "oklch(0.78 0.095 75)",
   amberSoft:   "oklch(0.32 0.05 75)",
-
   hair:        "oklch(0.34 0.014 55)",
   hair2:       "oklch(0.30 0.014 55)",
-
   danger:      "oklch(0.7 0.13 25)",
   dangerSoft:  "oklch(0.32 0.06 30)",
 };
@@ -118,9 +104,6 @@ function useStorage() {
   return [verses, save];
 }
 
-// ─────────────────────────────────────────────────────────────
-// Minimal line icon set
-// ─────────────────────────────────────────────────────────────
 const Icon = {
   Plus: (p={}) => (<svg width={p.size||22} height={p.size||22} viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round"/></svg>),
   Search: (p={}) => (<svg width={p.size||20} height={p.size||20} viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.6"/><path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/></svg>),
@@ -138,9 +121,6 @@ const Icon = {
   Trash: (p={}) => (<svg width={p.size||16} height={p.size||16} viewBox="0 0 24 24" fill="none"><path d="M5 7h14M10 7V5a1 1 0 011-1h2a1 1 0 011 1v2M7 7l1 13a1 1 0 001 1h6a1 1 0 001-1l1-13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>),
 };
 
-// ─────────────────────────────────────────────────────────────
-// Main component
-// ─────────────────────────────────────────────────────────────
 export default function VerseKeeper() {
   const [verses, setVerses] = useStorage();
   const [screen, setScreen] = useState("home");
@@ -215,6 +195,7 @@ export default function VerseKeeper() {
 
   const stopVoice = () => { recognitionRef.current?.stop(); setListening(false); };
 
+  // BUG FIX 1: After saving, go to "home" instead of "saved"
   const saveVerse = () => {
     if (!form.book || !form.chapter || !form.verse) { setFormError("Please fill in Book, Chapter, and Verse to save."); return; }
     const newVerse = { id: Date.now(), book: form.book, chapter: parseInt(form.chapter), verse: parseInt(form.verse), verseText: form.verseText, note: form.note, tags: form.tags, createdAt: new Date().toISOString(), isFavorite: false };
@@ -222,7 +203,7 @@ export default function VerseKeeper() {
     setForm({ book:"", chapter:"", verse:"", verseText:"", note:"", tags:[] });
     setFormError(""); setVoiceTranscript("");
     showToast("Saved. You can find it anytime under My Verses.");
-    setScreen("saved");
+    setScreen("home"); // FIXED: was "saved", now goes back to home
   };
 
   const toggleFavorite = (id) => setVerses(verses.map(v => v.id === id ? { ...v, isFavorite: !v.isFavorite } : v));
@@ -251,20 +232,15 @@ export default function VerseKeeper() {
   return (
     <div style={shell}>
       {toast && <Toast toast={toast} C={C} />}
-
       {screen === "home"   && <HomeScreen   C={C} verses={verses} dailyVerse={dailyVerse} setScreen={setScreen} darkMode={darkMode} setDarkMode={setDarkMode} formatDate={formatDate} />}
       {screen === "save"   && <SaveScreen   C={C} form={form} setForm={setForm} formError={formError} fetchingText={fetchingText} listening={listening} voiceTranscript={voiceTranscript} startVoice={startVoice} stopVoice={stopVoice} saveVerse={saveVerse} toggleTag={toggleTag} darkMode={darkMode} setDarkMode={setDarkMode} setScreen={setScreen} />}
       {screen === "saved"  && <SavedScreen  C={C} verses={verses} filteredVerses={filteredVerses} activeTab={activeTab} setActiveTab={setActiveTab} toggleFavorite={toggleFavorite} deleteVerse={deleteVerse} formatDate={formatDate} darkMode={darkMode} setDarkMode={setDarkMode} setScreen={setScreen} />}
       {screen === "search" && <SearchScreen C={C} searchQ={searchQ} setSearchQ={setSearchQ} filteredVerses={filteredVerses} verses={verses} toggleFavorite={toggleFavorite} deleteVerse={deleteVerse} formatDate={formatDate} darkMode={darkMode} setDarkMode={setDarkMode} setScreen={setScreen} />}
-
       <TabBar screen={screen} setScreen={setScreen} C={C} />
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Toast
-// ─────────────────────────────────────────────────────────────
 function Toast({ toast, C }) {
   const bg = toast.type === "error" ? C.danger : toast.type === "info" ? C.ink2 : C.accent;
   return (
@@ -273,16 +249,13 @@ function Toast({ toast, C }) {
       background: bg, color:"#fff", padding:"10px 18px", borderRadius:99,
       fontSize:13, fontFamily:SANS, zIndex:999, whiteSpace:"nowrap",
       boxShadow:"0 8px 24px rgba(40,25,15,0.18)", fontWeight:500,
-      letterSpacing:"-0.005em", animation:"vkToast 0.3s ease",
+      letterSpacing:"-0.005em",
     }}>
       {toast.msg}
     </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Top app bar (used on every screen)
-// ─────────────────────────────────────────────────────────────
 function TopBar({ left, right, C }) {
   return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 22px 6px" }}>
@@ -315,9 +288,6 @@ function DarkToggle({ darkMode, setDarkMode, C }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Home
-// ─────────────────────────────────────────────────────────────
 function HomeScreen({ C, verses, dailyVerse, setScreen, darkMode, setDarkMode, formatDate }) {
   const hour = new Date().getHours();
   const greeting = hour < 5 ? "Hello," : hour < 12 ? "Good morning." : hour < 17 ? "Good afternoon." : hour < 21 ? "Good evening." : "Hello,";
@@ -427,9 +397,6 @@ function EmptyHero({ C, onSave }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Section + verse row
-// ─────────────────────────────────────────────────────────────
 function SectionLabel({ C, label, right, onRight }) {
   return (
     <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 22px", margin:"22px 0 10px" }}>
@@ -470,9 +437,6 @@ function VerseRow({ verse, C, onClick, formatDate }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Save
-// ─────────────────────────────────────────────────────────────
 function SaveScreen({ C, form, setForm, formError, fetchingText, listening, voiceTranscript, startVoice, stopVoice, saveVerse, toggleTag, darkMode, setDarkMode, setScreen }) {
   const ready = form.book && form.chapter && form.verse;
   return (
@@ -532,8 +496,8 @@ function SaveScreen({ C, form, setForm, formError, fetchingText, listening, voic
         }}>{formError}</div>
       )}
 
-      {/* Reference */}
-      <FieldLabel C={C}>Reference</FieldLabel>
+      {/* BUG FIX 2: Changed "Reference" to "Book, Chapter & Verse" */}
+      <FieldLabel C={C}>Book, Chapter &amp; Verse</FieldLabel>
       <div style={{ padding:"0 22px" }}>
         <select value={form.book} onChange={e => setForm(f => ({ ...f, book:e.target.value, verseText:"" }))} style={input(C)}>
           <option value="">Select a book…</option>
@@ -595,6 +559,7 @@ function SaveScreen({ C, form, setForm, formError, fetchingText, listening, voic
 function FieldLabel({ children, C }) {
   return <div style={{ fontFamily:SANS, fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", color:C.ink3, fontWeight:500, padding:"22px 22px 8px" }}>{children}</div>;
 }
+
 function input(C) {
   return {
     width:"100%", padding:"13px 14px", borderRadius:14,
@@ -603,6 +568,7 @@ function input(C) {
     boxSizing:"border-box", appearance:"none",
   };
 }
+
 function Divider({ C, text }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:12, padding:"4px 22px 14px" }}>
@@ -613,9 +579,6 @@ function Divider({ C, text }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Saved (My Verses)
-// ─────────────────────────────────────────────────────────────
 function SavedScreen({ C, verses, filteredVerses, activeTab, setActiveTab, toggleFavorite, deleteVerse, formatDate, darkMode, setDarkMode, setScreen }) {
   return (
     <div style={{ flex:1 }}>
@@ -656,9 +619,6 @@ function SavedScreen({ C, verses, filteredVerses, activeTab, setActiveTab, toggl
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Search
-// ─────────────────────────────────────────────────────────────
 function SearchScreen({ C, searchQ, setSearchQ, filteredVerses, verses, toggleFavorite, deleteVerse, formatDate, darkMode, setDarkMode, setScreen }) {
   const highlight = (text) => {
     if (!searchQ) return text;
@@ -722,9 +682,6 @@ function SearchScreen({ C, searchQ, setSearchQ, filteredVerses, verses, toggleFa
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Verse card (used in Saved + Search)
-// ─────────────────────────────────────────────────────────────
 function VerseCard({ verse, onFav, onDelete, formatDate, C, highlight }) {
   return (
     <div style={{
@@ -737,8 +694,7 @@ function VerseCard({ verse, onFav, onDelete, formatDate, C, highlight }) {
         </span>
         <button onClick={() => onFav(verse.id)} style={{
           background:"none", border:0, cursor:"pointer", padding:0,
-          color: verse.isFavorite ? C.amber : C.ink4,
-          display:"flex",
+          color: verse.isFavorite ? C.amber : C.ink4, display:"flex",
         }}>
           <Icon.Heart filled={verse.isFavorite} size={18}/>
         </button>
@@ -799,9 +755,6 @@ function EmptyState({ C, title, body, cta, onCta }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// FAB
-// ─────────────────────────────────────────────────────────────
 function FAB({ C, onClick }) {
   return (
     <button onClick={onClick} style={{
@@ -817,9 +770,6 @@ function FAB({ C, onClick }) {
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// Bottom tab bar (floating pill)
-// ─────────────────────────────────────────────────────────────
 function TabBar({ screen, setScreen, C }) {
   const tabs = [
     { id:"home",   icon:<Icon.Home/> },
@@ -831,8 +781,7 @@ function TabBar({ screen, setScreen, C }) {
     <div style={{
       position:"fixed", bottom:18, left:"50%", transform:"translateX(-50%)",
       width:"calc(100% - 32px)", maxWidth:398, height:64, zIndex:100,
-      background: C.card + " linear-gradient(0deg, transparent, transparent)",
-      backgroundColor: typeof window !== "undefined" && window.matchMedia?.("(prefers-color-scheme: dark)") ? C.card : "rgba(255, 251, 244, 0.88)",
+      backgroundColor: "rgba(255, 251, 244, 0.88)",
       backdropFilter:"blur(20px) saturate(180%)", WebkitBackdropFilter:"blur(20px) saturate(180%)",
       borderRadius:999, display:"flex", alignItems:"center", justifyContent:"space-around",
       padding:"0 14px",
